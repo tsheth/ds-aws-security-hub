@@ -1,1 +1,0 @@
-# ds-aws-security-hub
