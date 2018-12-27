@@ -2,20 +2,6 @@
 
 This is a sample template for AWS Serverless Application - Below is a brief explanation of what we have generated for you:
 
-```bash
-.
-├── README.md                   <-- This instructions file
-├── hello_world                 <-- Source code for a lambda function
-│   ├── __init__.py
-│   ├── app.py                  <-- Lambda function code
-│   └── requirements.txt        <-- Python dependencies
-├── template.yaml               <-- SAM Template
-└── tests                       <-- Unit tests
-    └── unit
-        ├── __init__.py
-        └── test_handler.py
-```
-
 ## Requirements
 
 * AWS CLI already configured with Administrator permission
@@ -51,38 +37,31 @@ sam local start-api
 
 If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
 
-**SAM CLI** is used to emulate both Lambda and API Gateway locally and uses our `template.yaml` to understand how to bootstrap this environment (runtime, where the source code is, etc.) - The following excerpt is what the CLI will read in order to initialize an API and its routes:
+**SAM CLI** is used to emulate both Lambda locally and uses our `template.yaml` to understand how to bootstrap this environment (runtime, where the source code is, etc.) - The following excerpt is what the CLI will read in order to initialize its routes:
 
 ```yaml
 ...
-Events:
-    HelloWorld:
-        Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+DSSecurityHubFunction:
+        Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
         Properties:
-            Path: /hello
-            Method: get
+            CodeUri: ds-aws-security-hub/
+            Handler: ds_aws_security_hub.lambda_handler
+            Runtime: python3.6
+            Role: arn:aws:iam::650143975734:role/awspydssecurityhubus
+            Events:
+                DSEvent:
+                    Type: SNS
 ```
 
 ## Packaging and deployment
 
-AWS Lambda Python runtime requires a flat folder with all dependencies including the application. SAM will use `CodeUri` property to know where to look up for both application and dependencies:
-
-```yaml
-...
-    HelloWorldFunction:
-        Type: AWS::Serverless::Function
-        Properties:
-            CodeUri: hello_world/
-            ...
-```
-
-Firstly, we need a `S3 bucket` where we can upload our Lambda functions packaged as ZIP before we deploy anything - If you don't have a S3 bucket to store code artifacts then this is a good time to create one:
+Firstly, we need a `S3 bucket` where we can upload our Lambda functions packaged as ZIP before we deploy anything - If you don't have a S3 bucket to store code artifacts (I am using pycharm aws toolkit so it will be created by pycharm)
 
 ```bash
 aws s3 mb s3://BUCKET_NAME
 ```
 
-Next, run the following command to package our Lambda function to S3:
+Next, run the following command to package our Lambda function to S3 (Not required if you are using PyCharm AWS toolkit):
 
 ```bash
 sam package \
@@ -155,17 +134,3 @@ sam deploy \
 aws cloudformation describe-stacks \
     --stack-name aws-serverless-application --query 'Stacks[].Outputs'
 ```
-
-## Bringing to the next level
-
-Here are a few ideas that you can use to get more acquainted as to how this overall process works:
-
-* Create an additional API resource (e.g. /hello/{proxy+}) and return the name requested through this new path
-* Update unit test to capture that
-* Package & Deploy
-
-Next, you can use the following resources to know more about beyond hello world samples and how others structure their Serverless applications:
-
-* [AWS Serverless Application Repository](https://aws.amazon.com/serverless/serverlessrepo/)
-* [Chalice Python Serverless framework](https://github.com/aws/chalice)
-* Sample Python with 3rd party dependencies, pipenv and Makefile: ``sam init --location https://github.com/aws-samples/cookiecutter-aws-sam-python``
