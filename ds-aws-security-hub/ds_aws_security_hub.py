@@ -15,6 +15,7 @@ import os
 
 # 3rd party libraries
 import boto3
+from ds_aws_gd import gd_event
 
 def evaluate_deep_security_event(deep_security_event):
 	"""
@@ -383,6 +384,8 @@ def lambda_handler(event, context):
 						for acct_number, e in aff_events_to_send.items():
 							print("Sending [{}] events to AWS SecuritY Hub for account [{}]".format(len(e), acct_number))	
 							send_events_to_hub(aff_events, acct_number=acct_number)
+	else:
+		gd_event(event, context)
 
 	return {
 		'total_events': total_events,
