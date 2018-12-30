@@ -2,7 +2,7 @@
 # standard library
 import json
 import os
-import urllib
+import urllib.request
 
 # 3rd party dependencies
 import deepsecurity
