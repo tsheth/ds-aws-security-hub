@@ -91,11 +91,11 @@ def send_to_slack(message, event):
             }
         ]
     }
-    request = urllib.Request(os.environ['slackURL'])
+    request = os.environ['slackURL']
     request.add_header('Content-type', 'application/json')
 
     try:
-        response = urllib.urlopen(request, json.dumps(msg))
+        response = urllib.request.urlopen(request, json.dumps(msg))
         print("Sent message to Slack. Received response {}".format(response))
     except Exception as err:
         print("Could not send the message to Slack. Threw exception: {}".format(err))
