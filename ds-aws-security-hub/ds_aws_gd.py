@@ -19,8 +19,7 @@ def is_event_from_guardduty(event):
     """
     result = False
 
-    if event.has_key('source') and event['source'].lower() == 'aws.guardduty' and event.has_key('detail') and event[
-        'detail'].has_key('type'):
+    if 'source' in event and event['source'].lower() == 'aws.guardduty' and 'detail' in event and 'type' in event['detail']:
         result = True
 
     return result
@@ -32,20 +31,20 @@ def sign_in_to_deep_security():
     """
     global DSM
 
-    if not os.environ.has_key('dsUsername') or not os.environ.has_key('dsPassword'):
+    if 'dsUsername' not in os.environ or 'dsPassword' not in os.environ:
         print("dsUsername and dsPassword are REQUIRED environment variables for this AWS Lambda function")
         return None
 
     ds_username = os.environ['dsUsername']
     ds_password = os.environ['dsPassword']
     ds_tenant = None
-    if os.environ.has_key('dsTenant'): ds_tenant = os.environ['dsTenant']
+    if 'dsTenant' in os.environ: ds_tenant = os.environ['dsTenant']
     ds_hostname = None
-    if os.environ.has_key('dsHostname'): ds_hostname = os.environ['dsHostname']
+    if 'dsHostname' in os.environ: ds_hostname = os.environ['dsHostname']
     ds_port = None
-    if os.environ.has_key('dsPort'): ds_port = os.environ['dsPort']
+    if 'dsPort' in os.environ: ds_port = os.environ['dsPort']
     ds_ignore_ssl_validation = None
-    if os.environ.has_key('dsIgnoreSslValidation'): ds_ignore_ssl_validation = os.environ['dsIgnoreSslValidation']
+    if 'dsIgnoreSslValidation' in os.environ: ds_ignore_ssl_validation = os.environ['dsIgnoreSslValidation']
 
     try:
         DSM = deepsecurity.dsm.Manager(username=ds_username, password=ds_password, tenant=ds_tenant)
@@ -139,8 +138,7 @@ def get_affected_instance_id(event):
     Get the instance ID of the affected instance in the finding
     """
     result = None
-    if event.has_key('detail') and event['detail'].has_key('resource') and event['detail']['resource'].has_key(
-            'instanceDetails') and event['detail']['resource']['instanceDetails'].has_key('instanceId'):
+    if 'detail' in event and 'resource' in event['detail'] and 'instanceDetails' in event['detail']['resource'] and 'instanceId' in event['detail']['resource']['instanceDetails']:
         result = event['detail']['resource']['instanceDetails']['instanceId']
         print("Finding is specific to instance [{}]".format(result))
 
@@ -160,7 +158,7 @@ def enable_ips_for_instance_in_ds(instance_in_ds):
         else:
             # turn on the IPS via hostSettingGet() / hostSettingSet()
             print("Enabling IPS for instance in DS {}".format(instance_in_ds.computer_name))
-            if DSM.policies.has_key(instance_in_ds.security_profile_id):
+            if instance_in_ds.security_profile_id in DSM.policies:
                 DSM.policies[instance_in_ds.security_profile_id].intrusion_prevention_state = "ON"
                 DSM.policies[instance_in_ds.security_profile_id].save()
                 print("Updated security policy {} by enabling intrusion prevention".format(
@@ -183,7 +181,7 @@ def enable_am_for_instance_in_ds(instance_in_ds):
         else:
             # turn on the anti-malware via hostSettingGet() / hostSettingSet()
             print("Enabling anti-malware for instance in DS {}".format(instance_in_ds.computer_name))
-            if DSM.policies.has_key(instance_in_ds.security_profile_id):
+            if instance_in_ds.security_profile_id in DSM.policies:
                 DSM.policies[instance_in_ds.security_profile_id].anti_malware_state = "ON"
                 DSM.policies[instance_in_ds.security_profile_id].save()
                 print("Updated security policy {} by enabling anti-malware".format(
@@ -206,7 +204,7 @@ def enable_im_for_instance_in_ds(instance_in_ds):
         else:
             # turn on the IPS via hostSettingGet() / hostSettingSet()
             print("Enabling IPS for instance in DS {}".format(instance_in_ds.computer_name))
-            if DSM.policies.has_key(instance_in_ds.security_profile_id):
+            if instance_in_ds.security_profile_id in DSM.policies:
                 DSM.policies[instance_in_ds.security_profile_id].integrity_monitoring_state = "ON"
                 DSM.policies[instance_in_ds.security_profile_id].save()
                 print("Updated security policy {} by enabling integrity monitoring".format(
@@ -219,12 +217,12 @@ def enable_im_for_instance_in_ds(instance_in_ds):
 def gd_event(event, context):
     if is_event_from_guardduty(event):
         # check the environment variables
-        if os.environ.has_key('slackURL'):
+        if 'slackURL' in os.environ:
             global ENABLE_SLACK
             print("Sending messages to Slack")
             ENABLE_SLACK = True
 
-        if os.environ.has_key('enableModules'):
+        if 'enableModules' in os.environ:
             global ENABLE_MODULES
             if int(os.environ['enableModules']) == 1:
                 print("Enabling Deep Security modules as required")
