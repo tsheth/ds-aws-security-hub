@@ -8,8 +8,6 @@ Globals:
     Function:
         Timeout: 30
 
-
-
 Resources:
 
     DSSecurityHubFunction:
@@ -25,6 +23,15 @@ Resources:
                     Properties:
                       Topic:
                         Ref: SNSTopic1
+            Environment:
+                Variables:
+                    dsHostname: app.deepsecurity.trendmicro.com
+                    dsPassword: Trend@ut0heal
+                    dsPort: 443
+                    dsTenant: TrendIndia
+                    dsUsername: api
+                    enableModules: 1
+                    slackURL: https://hooks.slack.com/services/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
 
     SNSTopic1:
         Type: 'AWS::SNS::Topic'

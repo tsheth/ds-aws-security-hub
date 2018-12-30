@@ -2,7 +2,7 @@
 # standard library
 import json
 import os
-import urllib3
+import urllib
 
 # 3rd party dependencies
 import deepsecurity
@@ -91,11 +91,11 @@ def send_to_slack(message, event):
             }
         ]
     }
-    request = urllib3.Request(os.environ['slackURL'])
+    request = urllib.Request(os.environ['slackURL'])
     request.add_header('Content-type', 'application/json')
 
     try:
-        response = urllib3.urlopen(request, json.dumps(msg))
+        response = urllib.urlopen(request, json.dumps(msg))
         print("Sent message to Slack. Received response {}".format(response))
     except Exception as err:
         print("Could not send the message to Slack. Threw exception: {}".format(err))
