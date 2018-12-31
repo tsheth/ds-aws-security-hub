@@ -2,7 +2,8 @@
 # standard library
 import json
 import os
-import urllib.request
+import urllib.request as urllibreq
+import urllib.parse
 
 # 3rd party dependencies
 import deepsecurity
@@ -91,7 +92,7 @@ def send_to_slack(message, event):
             }
         ]
     }
-    request = os.environ['slackURL']
+    request = urllib.request.Request(os.environ['slackURL'])
     request.add_header('Content-type', 'application/json')
 
     try:
