@@ -173,7 +173,7 @@ def enable_ips_for_instance_in_ds(instance_in_ds):
     For the specified Computer object, make sure that the IPS is on and active
     """
     result = None
-    if instance_in_ds and ENABLE_MODULES and DSM:
+    if instance_in_ds and ENABLE_MODULES:
         if "on" in instance_in_ds.overall_intrusion_prevention_status.lower():
             # IPS is already on, do nothing
             print("IPS is already active for instance in DS {}".format(instance_in_ds.computer_name))
@@ -219,7 +219,7 @@ def enable_im_for_instance_in_ds(instance_in_ds):
     For the specified Computer object, make sure that integrity monitoring is on and active
     """
     result = None
-    if instance_in_ds and ENABLE_MODULES and DSM:
+    if instance_in_ds and ENABLE_MODULES:
         if "on" in instance_in_ds.overall_integrity_monitoring_status.lower():
             # IPS is already on, do nothing
             print("Integrity monitoring is already active for instance in DS {}".format(instance_in_ds.computer_name))
