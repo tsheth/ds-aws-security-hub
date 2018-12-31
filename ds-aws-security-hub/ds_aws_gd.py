@@ -7,6 +7,7 @@ import urllib.parse
 
 # 3rd party dependencies
 import deepsecurity as client
+import deepsecurity
 from deepsecurity.rest import ApiException as api_exception
 
 
@@ -14,7 +15,7 @@ from deepsecurity.rest import ApiException as api_exception
 ENABLE_SLACK = False
 ENABLE_MODULES = False
 DSM = None
-
+configuration = None
 
 def is_event_from_guardduty(event):
     """
@@ -33,15 +34,11 @@ def sign_in_to_deep_security():
     Sign in to Deep Security
     """
     global DSM
-    configuration = client.Configuration()
+    global configuration
 
-    #if 'dsUsername' not in os.environ or 'dsPassword' not in os.environ:
-    #    print("dsUsername and dsPassword are REQUIRED environment variables for this AWS Lambda function")
-    #    return None
-    #ds_username = os.environ['dsUsername']
-    #ds_password = os.environ['dsPassword']
-    #ds_tenant = None
-    #if 'dsTenant' in os.environ: ds_tenant = os.environ['dsTenant']
+    configuration = client.Configuration()
+    DSM_policy = client.PoliciesApi(client.ApiClient(configuration))
+    DSM_client = client.ComputersApi(client.ApiClient(configuration))
 
     if 'apiKey' not in os.environ:
         print("apiKey is REQUIRED environment variables for this AWS Lambda function")
@@ -53,26 +50,22 @@ def sign_in_to_deep_security():
     ds_port = None
     if 'dsPort' in os.environ: ds_port = os.environ['dsPort']
 
-    ds_ignore_ssl_validation = None
-    if 'dsIgnoreSslValidation' in os.environ: ds_ignore_ssl_validation = os.environ['dsIgnoreSslValidation']
+    # ds_ignore_ssl_validation = None
+    # if 'dsIgnoreSslValidation' in os.environ: ds_ignore_ssl_validation = os.environ['dsIgnoreSslValidation']
 
     try:
-        #DSM = deepsecurity.dsm.Manager(username=ds_username, password=ds_password, tenant=ds_tenant)
-        #DSM.sign_in()
-        #DSM.computers.get()
-        #DSM.policies.get()
-
         # DSM connection string
         configuration.host = 'https://' + ds_hostname + ':' + ds_port + '/api'
-
+        configuration.verify_ssl = False
         # Authentication
         configuration.api_key['api-secret-key'] = ds_api_key
         api_version = 'v1'
 
-        policies_list = client.PoliciesApi(client.ApiClient(configuration)).list_policies(api_version)
+        policies_list = DSM_policy.list_policies(api_version)
+        computer_list = DSM_client.list_computers(api_version)
 
-        print("Signed into Deep Security" + policies_list)
-    except Exception as ex:
+        print("Signed into Deep Security")
+    except api_exception as ex:
         print("Could not successfully sign into Deep Security. Threw exception: {}".format(ex))
 
 
@@ -111,12 +104,16 @@ def send_to_slack(message, event):
             }
         ]
     }
+
+    data = urllib.parse.urlencode(msg).encode("utf-8")
     request = urllib.request.Request(os.environ['slackURL'])
     request.add_header('Content-type', 'application/json')
 
     try:
-        response = urllib.request.urlopen(request, json.dumps(msg))
-        print("Sent message to Slack. Received response {}".format(response))
+        #response = urllib.request.urlopen(request, json.dumps(data))
+        with urllib.request.urlopen(request, data=data) as f:
+            response = f.read()
+            print("Sent message to Slack. Received response {}".format(response))
     except Exception as err:
         print("Could not send the message to Slack. Threw exception: {}".format(err))
 
@@ -140,14 +137,20 @@ def get_affected_instance_in_deep_security(instance_id):
     """
     result = None
 
-    if not DSM: return result
+    # if not DSM: return result
+    DSM_computer = client.ComputersApi(client.ApiClient(configuration))
 
     try:
-        computers = DSM.computers.find(cloud_object_instance_id=instance_id)
+        # NEED TO CHANGE THIS CODE TO SEARCH SPECIFIC INSTANCE ID
+        search_filter = deepsecurity.SearchFilter()
+        overrides = False
+
+        computers = DSM_computer.search_computers('v1', search_filter=search_filter, overrides=overrides)
+        print(computers['display_name'])
         if len(computers) > 0:
-            result = DSM.computers[computers[0]]
-            print("Found the instance in Deep Security as computer {}".format(result.name))
-    except Exception as ex:
+            result = str(computers['display_name'])
+            print("Found the instance in Deep Security as computer {}".format(result))
+    except api_exception as ex:
         print("Could not find the instance in Deep Security. Threw exception: {}".format(ex))
 
     return result
