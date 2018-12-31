@@ -6,7 +6,9 @@ import urllib.request as urllibreq
 import urllib.parse
 
 # 3rd party dependencies
-import deepsecurity
+import deepsecurity as client
+from deepsecurity.rest import ApiException as api_exception
+
 
 # settings
 ENABLE_SLACK = False
@@ -31,28 +33,45 @@ def sign_in_to_deep_security():
     Sign in to Deep Security
     """
     global DSM
+    configuration = client.Configuration()
 
-    if 'dsUsername' not in os.environ or 'dsPassword' not in os.environ:
-        print("dsUsername and dsPassword are REQUIRED environment variables for this AWS Lambda function")
+    #if 'dsUsername' not in os.environ or 'dsPassword' not in os.environ:
+    #    print("dsUsername and dsPassword are REQUIRED environment variables for this AWS Lambda function")
+    #    return None
+    #ds_username = os.environ['dsUsername']
+    #ds_password = os.environ['dsPassword']
+    #ds_tenant = None
+    #if 'dsTenant' in os.environ: ds_tenant = os.environ['dsTenant']
+
+    if 'apiKey' not in os.environ:
+        print("apiKey is REQUIRED environment variables for this AWS Lambda function")
         return None
+    ds_api_key = os.environ['apiKey']
 
-    ds_username = os.environ['dsUsername']
-    ds_password = os.environ['dsPassword']
-    ds_tenant = None
-    if 'dsTenant' in os.environ: ds_tenant = os.environ['dsTenant']
     ds_hostname = None
     if 'dsHostname' in os.environ: ds_hostname = os.environ['dsHostname']
     ds_port = None
     if 'dsPort' in os.environ: ds_port = os.environ['dsPort']
+
     ds_ignore_ssl_validation = None
     if 'dsIgnoreSslValidation' in os.environ: ds_ignore_ssl_validation = os.environ['dsIgnoreSslValidation']
 
     try:
-        DSM = deepsecurity.dsm.Manager(username=ds_username, password=ds_password, tenant=ds_tenant)
-        DSM.sign_in()
-        DSM.computers.get()
-        DSM.policies.get()
-        print("Signed into Deep Security")
+        #DSM = deepsecurity.dsm.Manager(username=ds_username, password=ds_password, tenant=ds_tenant)
+        #DSM.sign_in()
+        #DSM.computers.get()
+        #DSM.policies.get()
+
+        # DSM connection string
+        configuration.host = 'https://' + ds_hostname + ':' + ds_port + '/api'
+
+        # Authentication
+        configuration.api_key['api-secret-key'] = ds_api_key
+        api_version = 'v1'
+
+        policies_list = client.PoliciesApi(client.ApiClient(configuration)).list_policies(api_version)
+
+        print("Signed into Deep Security" + policies_list)
     except Exception as ex:
         print("Could not successfully sign into Deep Security. Threw exception: {}".format(ex))
 
