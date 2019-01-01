@@ -143,12 +143,17 @@ def get_affected_instance_in_deep_security(instance_id):
     try:
         # NEED TO CHANGE THIS CODE TO SEARCH SPECIFIC INSTANCE ID
         search_filter = deepsecurity.SearchFilter()
+        # search_criteria = deepsecurity.SearchCriteria(field_name='instance_id', string_value=instance_id)
+        # search_filter.search_criteria = [search_criteria]
         overrides = False
 
         computers = DSM_computer.search_computers('v1', search_filter=search_filter, overrides=overrides)
-        print(computers['display_name'])
+
+        for computer in computers:
+            print(computer['ec2VirtualMachineSummary']['instanceID'])
+
         if len(computers) > 0:
-            result = str(computers['display_name'])
+            result = str(computers)
             print("Found the instance in Deep Security as computer {}".format(result))
     except api_exception as ex:
         print("Could not find the instance in Deep Security. Threw exception: {}".format(ex))
