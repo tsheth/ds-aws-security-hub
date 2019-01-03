@@ -129,6 +129,7 @@ def print_event(event):
         print(ex)
 
 
+
 def get_affected_instance_in_deep_security(instance_id):
     """
     Find and return the specified instance in Deep Security
@@ -143,22 +144,21 @@ def get_affected_instance_in_deep_security(instance_id):
     try:
         # NEED TO CHANGE THIS CODE TO SEARCH SPECIFIC INSTANCE ID
         search_filter = deepsecurity.SearchFilter()
-        # search_criteria = deepsecurity.SearchCriteria(field_name='instance_id', string_value=instance_id)
-        # search_filter.search_criteria = [search_criteria]
         overrides = False
 
-        computers = DSM_computer.search_computers('v1', search_filter=search_filter, overrides=overrides)
+        response = DSM_computer.search_computers('v1', search_filter=search_filter, overrides=overrides)
 
-        for computer in computers:
-            print(computer['ec2VirtualMachineSummary']['instanceID'])
+        for computer in response.computers:
+            if computer.ec2_virtual_machine_summary.instance_id == instance_id:
+                attr = vars(computer)
+                print(attr['_id'])
+                print(type(attr['_id']))
+                return attr['_id']
+                #return computer
 
-        if len(computers) > 0:
-            result = str(computers)
-            print("Found the instance in Deep Security as computer {}".format(result))
     except api_exception as ex:
         print("Could not find the instance in Deep Security. Threw exception: {}".format(ex))
 
-    return result
 
 
 def get_affected_instance_id(event):
@@ -287,7 +287,10 @@ def gd_event(event, context):
             # run a recommendation scan
             if instance_in_ds:
                 print("Requested recommendation scan for instance {}".format(instance_id))
-                instance_in_ds.scan_for_recommendations()
+                api_instance = deepsecurity.ScheduledTasksApi(deepsecurity.ApiClient(configuration))
+                scheduled_task = deepsecurity.ScheduledTask()
+                api_instance.create_scheduled_task(scheduled_task, 'v1').scanForRecommendationsTaskParameters.computer_filter(computerID=instance_in_ds)
+
 
                 # make sure that IPS is on and active
                 ips_result = enable_ips_for_instance_in_ds(instance_in_ds)
