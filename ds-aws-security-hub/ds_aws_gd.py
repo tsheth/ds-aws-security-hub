@@ -144,7 +144,7 @@ def get_affected_instance_in_deep_security(instance_id):
     try:
         # NEED TO CHANGE THIS CODE TO SEARCH SPECIFIC INSTANCE ID
         search_filter = deepsecurity.SearchFilter()
-        overrides = False
+        overrides = True
 
         response = DSM_computer.search_computers('v1', search_filter=search_filter, overrides=overrides)
 
@@ -154,7 +154,6 @@ def get_affected_instance_in_deep_security(instance_id):
                 print(attr['_id'])
                 print(type(attr['_id']))
                 return attr['_id']
-                #return computer
 
     except api_exception as ex:
         print("Could not find the instance in Deep Security. Threw exception: {}".format(ex))
